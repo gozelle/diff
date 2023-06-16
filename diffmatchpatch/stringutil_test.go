@@ -1,5 +1,5 @@
 // Copyright (c) 2012-2016 The go-diff authors. All rights reserved.
-// https://github.com/sergi/go-diff
+// https://github.com/gozelle/diff
 // See the included LICENSE file for license details.
 //
 // go-diff is a Go implementation of Google's Diff, Match, and Patch library
@@ -11,7 +11,7 @@ package diffmatchpatch
 import (
 	"fmt"
 	"testing"
-
+	
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,10 +19,10 @@ func TestRunesIndexOf(t *testing.T) {
 	type TestCase struct {
 		Pattern string
 		Start   int
-
+		
 		Expected int
 	}
-
+	
 	for i, tc := range []TestCase{
 		{"abc", 0, 0},
 		{"cde", 0, 2},
@@ -46,10 +46,10 @@ func TestIndexOf(t *testing.T) {
 		String   string
 		Pattern  string
 		Position int
-
+		
 		Expected int
 	}
-
+	
 	for i, tc := range []TestCase{
 		{"hi world", "world", -1, 3},
 		{"hi world", "world", 0, 3},
@@ -81,10 +81,10 @@ func TestLastIndexOf(t *testing.T) {
 		String   string
 		Pattern  string
 		Position int
-
+		
 		Expected int
 	}
-
+	
 	for i, tc := range []TestCase{
 		{"hi world", "world", -1, -1},
 		{"hi world", "world", 0, -1},

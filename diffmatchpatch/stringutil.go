@@ -1,5 +1,5 @@
 // Copyright (c) 2012-2016 The go-diff authors. All rights reserved.
-// https://github.com/sergi/go-diff
+// https://github.com/gozelle/diff
 // See the included LICENSE file for license details.
 //
 // go-diff is a Go implementation of Google's Diff, Match, and Patch library
@@ -92,9 +92,9 @@ func intArrayToString(ns []uint32) string {
 	if len(ns) == 0 {
 		return ""
 	}
-
+	
 	indexSeparator := IndexSeparator[0]
-
+	
 	// Appr. 3 chars per num plus the comma.
 	b := []byte{}
 	for _, n := range ns {

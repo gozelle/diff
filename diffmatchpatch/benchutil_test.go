@@ -1,5 +1,5 @@
 // Copyright (c) 2012-2016 The go-diff authors. All rights reserved.
-// https://github.com/sergi/go-diff
+// https://github.com/gozelle/diff
 // See the included LICENSE file for license details.
 //
 // go-diff is a Go implementation of Google's Diff, Match, and Patch library
@@ -23,6 +23,6 @@ func speedtestTexts() (s1 string, s2 string) {
 	if err != nil {
 		panic(err)
 	}
-
+	
 	return string(d1), string(d2)
 }

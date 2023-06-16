@@ -1,5 +1,5 @@
 // Copyright (c) 2012-2016 The go-diff authors. All rights reserved.
-// https://github.com/sergi/go-diff
+// https://github.com/gozelle/diff
 // See the included LICENSE file for license details.
 //
 // go-diff is a Go implementation of Google's Diff, Match, and Patch library
@@ -32,7 +32,7 @@ type Patch struct {
 // Indices are printed as 1-based, not 0-based.
 func (p *Patch) String() string {
 	var coords1, coords2 string
-
+	
 	if p.Length1 == 0 {
 		coords1 = strconv.Itoa(p.Start1) + ",0"
 	} else if p.Length1 == 1 {
@@ -40,7 +40,7 @@ func (p *Patch) String() string {
 	} else {
 		coords1 = strconv.Itoa(p.Start1+1) + "," + strconv.Itoa(p.Length1)
 	}
-
+	
 	if p.Length2 == 0 {
 		coords2 = strconv.Itoa(p.Start2) + ",0"
 	} else if p.Length2 == 1 {
@@ -48,10 +48,10 @@ func (p *Patch) String() string {
 	} else {
 		coords2 = strconv.Itoa(p.Start2+1) + "," + strconv.Itoa(p.Length2)
 	}
-
+	
 	var text bytes.Buffer
 	_, _ = text.WriteString("@@ -" + coords1 + " +" + coords2 + " @@\n")
-
+	
 	// Escape the body of the patch with %xx notation.
 	for _, aDiff := range p.diffs {
 		switch aDiff.Type {
@@ -62,11 +62,11 @@ func (p *Patch) String() string {
 		case DiffEqual:
 			_, _ = text.WriteString(" ")
 		}
-
+		
 		_, _ = text.WriteString(strings.Replace(url.QueryEscape(aDiff.Text), "+", " ", -1))
 		_, _ = text.WriteString("\n")
 	}
-
+	
 	return unescaper.Replace(text.String())
 }
 
@@ -75,10 +75,10 @@ func (dmp *DiffMatchPatch) PatchAddContext(patch Patch, text string) Patch {
 	if len(text) == 0 {
 		return patch
 	}
-
+	
 	pattern := text[patch.Start2 : patch.Start2+patch.Length1]
 	padding := 0
-
+	
 	// Look for the first and last matches of pattern in text.  If two different matches are found, increase the pattern length.
 	for strings.Index(text, pattern) != strings.LastIndex(text, pattern) &&
 		len(pattern) < dmp.MatchMaxBits-2*dmp.PatchMargin {
@@ -89,7 +89,7 @@ func (dmp *DiffMatchPatch) PatchAddContext(patch Patch, text string) Patch {
 	}
 	// Add one chunk for good luck.
 	padding += dmp.PatchMargin
-
+	
 	// Add the prefix.
 	prefix := text[max(0, patch.Start2-padding):patch.Start2]
 	if len(prefix) != 0 {
@@ -100,14 +100,14 @@ func (dmp *DiffMatchPatch) PatchAddContext(patch Patch, text string) Patch {
 	if len(suffix) != 0 {
 		patch.diffs = append(patch.diffs, Diff{DiffEqual, suffix})
 	}
-
+	
 	// Roll back the start points.
 	patch.Start1 -= len(prefix)
 	patch.Start2 -= len(prefix)
 	// Extend the lengths.
 	patch.Length1 += len(prefix) + len(suffix)
 	patch.Length2 += len(prefix) + len(suffix)
-
+	
 	return patch
 }
 
@@ -144,21 +144,21 @@ func (dmp *DiffMatchPatch) patchMake2(text1 string, diffs []Diff) []Patch {
 	if len(diffs) == 0 {
 		return patches // Get rid of the null case.
 	}
-
+	
 	patch := Patch{}
 	charCount1 := 0 // Number of characters into the text1 string.
 	charCount2 := 0 // Number of characters into the text2 string.
 	// Start with text1 (prepatchText) and apply the diffs until we arrive at text2 (postpatchText). We recreate the patches one by one to determine context info.
 	prepatchText := text1
 	postpatchText := text1
-
+	
 	for i, aDiff := range diffs {
 		if len(patch.diffs) == 0 && aDiff.Type != DiffEqual {
 			// A new patch starts here.
 			patch.Start1 = charCount1
 			patch.Start2 = charCount2
 		}
-
+		
 		switch aDiff.Type {
 		case DiffInsert:
 			patch.diffs = append(patch.diffs, aDiff)
@@ -189,7 +189,7 @@ func (dmp *DiffMatchPatch) patchMake2(text1 string, diffs []Diff) []Patch {
 				}
 			}
 		}
-
+		
 		// Update the current character count.
 		if aDiff.Type != DiffInsert {
 			charCount1 += len(aDiff.Text)
@@ -198,13 +198,13 @@ func (dmp *DiffMatchPatch) patchMake2(text1 string, diffs []Diff) []Patch {
 			charCount2 += len(aDiff.Text)
 		}
 	}
-
+	
 	// Pick up the leftover patch if not empty.
 	if len(patch.diffs) != 0 {
 		patch = dmp.PatchAddContext(patch, prepatchText)
 		patches = append(patches, patch)
 	}
-
+	
 	return patches
 }
 
@@ -233,14 +233,14 @@ func (dmp *DiffMatchPatch) PatchApply(patches []Patch, text string) (string, []b
 	if len(patches) == 0 {
 		return text, []bool{}
 	}
-
+	
 	// Deep copy the patches so that no changes are made to originals.
 	patches = dmp.PatchDeepCopy(patches)
-
+	
 	nullPadding := dmp.PatchAddPadding(patches)
 	text = nullPadding + text + nullPadding
 	patches = dmp.PatchSplitMax(patches)
-
+	
 	x := 0
 	// delta keeps track of the offset between the expected and actual location of the previous patch.  If there are patches expected at positions 10 and 20, but the first patch was found at 12, delta is 2 and the second patch has an effective expected position of 22.
 	delta := 0
@@ -326,13 +326,13 @@ func (dmp *DiffMatchPatch) PatchAddPadding(patches []Patch) string {
 	for x := 1; x <= paddingLength; x++ {
 		nullPadding += string(rune(x))
 	}
-
+	
 	// Bump all the patches forward.
 	for i := range patches {
 		patches[i].Start1 += paddingLength
 		patches[i].Start2 += paddingLength
 	}
-
+	
 	// Add some padding on start of first diff.
 	if len(patches[0].diffs) == 0 || patches[0].diffs[0].Type != DiffEqual {
 		// Add nullPadding equality.
@@ -350,7 +350,7 @@ func (dmp *DiffMatchPatch) PatchAddPadding(patches []Patch) string {
 		patches[0].Length1 += extraLength
 		patches[0].Length2 += extraLength
 	}
-
+	
 	// Add some padding on end of last diff.
 	last := len(patches) - 1
 	if len(patches[last].diffs) == 0 || patches[last].diffs[len(patches[last].diffs)-1].Type != DiffEqual {
@@ -366,7 +366,7 @@ func (dmp *DiffMatchPatch) PatchAddPadding(patches []Patch) string {
 		patches[last].Length1 += extraLength
 		patches[last].Length2 += extraLength
 	}
-
+	
 	return nullPadding
 }
 
@@ -382,7 +382,7 @@ func (dmp *DiffMatchPatch) PatchSplitMax(patches []Patch) []Patch {
 		// Remove the big old patch.
 		patches = append(patches[:x], patches[x+1:]...)
 		x--
-
+		
 		Start1 := bigpatch.Start1
 		Start2 := bigpatch.Start2
 		precontext := ""
@@ -417,7 +417,7 @@ func (dmp *DiffMatchPatch) PatchSplitMax(patches []Patch) []Patch {
 				} else {
 					// Deletion or equality.  Only take as much as we can stomach.
 					diffText = diffText[:min(len(diffText), patchSize-patch.Length1-dmp.PatchMargin)]
-
+					
 					patch.Length1 += len(diffText)
 					Start1 += len(diffText)
 					if diffType == DiffEqual {
@@ -438,7 +438,7 @@ func (dmp *DiffMatchPatch) PatchSplitMax(patches []Patch) []Patch {
 			// Compute the head context for the next patch.
 			precontext = dmp.DiffText2(patch.diffs)
 			precontext = precontext[max(0, len(precontext)-dmp.PatchMargin):]
-
+			
 			postcontext := ""
 			// Append the end context for this patch.
 			if len(dmp.DiffText1(bigpatch.diffs)) > dmp.PatchMargin {
@@ -446,7 +446,7 @@ func (dmp *DiffMatchPatch) PatchSplitMax(patches []Patch) []Patch {
 			} else {
 				postcontext = dmp.DiffText1(bigpatch.diffs)
 			}
-
+			
 			if len(postcontext) != 0 {
 				patch.Length1 += len(postcontext)
 				patch.Length2 += len(postcontext)
@@ -483,19 +483,19 @@ func (dmp *DiffMatchPatch) PatchFromText(textline string) ([]Patch, error) {
 	text := strings.Split(textline, "\n")
 	textPointer := 0
 	patchHeader := regexp.MustCompile("^@@ -(\\d+),?(\\d*) \\+(\\d+),?(\\d*) @@$")
-
+	
 	var patch Patch
 	var sign uint8
 	var line string
 	for textPointer < len(text) {
-
+		
 		if !patchHeader.MatchString(text[textPointer]) {
 			return patches, errors.New("Invalid patch string: " + text[textPointer])
 		}
-
+		
 		patch = Patch{}
 		m := patchHeader.FindStringSubmatch(text[textPointer])
-
+		
 		patch.Start1, _ = strconv.Atoi(m[1])
 		if len(m[2]) == 0 {
 			patch.Start1--
@@ -506,9 +506,9 @@ func (dmp *DiffMatchPatch) PatchFromText(textline string) ([]Patch, error) {
 			patch.Start1--
 			patch.Length1, _ = strconv.Atoi(m[2])
 		}
-
+		
 		patch.Start2, _ = strconv.Atoi(m[3])
-
+		
 		if len(m[4]) == 0 {
 			patch.Start2--
 			patch.Length2 = 1
@@ -519,7 +519,7 @@ func (dmp *DiffMatchPatch) PatchFromText(textline string) ([]Patch, error) {
 			patch.Length2, _ = strconv.Atoi(m[4])
 		}
 		textPointer++
-
+		
 		for textPointer < len(text) {
 			if len(text[textPointer]) > 0 {
 				sign = text[textPointer][0]
@@ -527,7 +527,7 @@ func (dmp *DiffMatchPatch) PatchFromText(textline string) ([]Patch, error) {
 				textPointer++
 				continue
 			}
-
+			
 			line = text[textPointer][1:]
 			line = strings.Replace(line, "+", "%2b", -1)
 			line, _ = url.QueryUnescape(line)
@@ -549,7 +549,7 @@ func (dmp *DiffMatchPatch) PatchFromText(textline string) ([]Patch, error) {
 			}
 			textPointer++
 		}
-
+		
 		patches = append(patches, patch)
 	}
 	return patches, nil

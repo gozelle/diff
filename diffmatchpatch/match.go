@@ -1,5 +1,5 @@
 // Copyright (c) 2012-2016 The go-diff authors. All rights reserved.
-// https://github.com/sergi/go-diff
+// https://github.com/gozelle/diff
 // See the included LICENSE file for license details.
 //
 // go-diff is a Go implementation of Google's Diff, Match, and Patch library
@@ -16,7 +16,7 @@ import (
 // Returns -1 if no match found.
 func (dmp *DiffMatchPatch) MatchMain(text, pattern string, loc int) int {
 	// Check for null inputs not needed since null can't be passed in C#.
-
+	
 	loc = int(math.Max(0, math.Min(float64(loc), float64(len(text)))))
 	if text == pattern {
 		// Shortcut (potentially not guaranteed by the algorithm)
@@ -37,7 +37,7 @@ func (dmp *DiffMatchPatch) MatchMain(text, pattern string, loc int) int {
 func (dmp *DiffMatchPatch) MatchBitap(text, pattern string, loc int) int {
 	// Initialise the alphabet.
 	s := dmp.MatchAlphabet(pattern)
-
+	
 	// Highest score beyond which we give up.
 	scoreThreshold := dmp.MatchThreshold
 	// Is there a nearby exact match? (speedup)
@@ -52,11 +52,11 @@ func (dmp *DiffMatchPatch) MatchBitap(text, pattern string, loc int) int {
 				pattern), scoreThreshold)
 		}
 	}
-
+	
 	// Initialise the bit arrays.
 	matchmask := 1 << uint((len(pattern) - 1))
 	bestLoc = -1
-
+	
 	var binMin, binMid int
 	binMax := len(pattern) + len(text)
 	lastRd := []int{}
@@ -76,10 +76,10 @@ func (dmp *DiffMatchPatch) MatchBitap(text, pattern string, loc int) int {
 		binMax = binMid
 		start := int(math.Max(1, float64(loc-binMid+1)))
 		finish := int(math.Min(float64(loc+binMid), float64(len(text))) + float64(len(pattern)))
-
+		
 		rd := make([]int, finish+2)
 		rd[finish+1] = (1 << uint(d)) - 1
-
+		
 		for j := finish; j >= start; j-- {
 			var charMatch int
 			if len(text) <= j-1 {
@@ -90,7 +90,7 @@ func (dmp *DiffMatchPatch) MatchBitap(text, pattern string, loc int) int {
 			} else {
 				charMatch = s[text[j-1]]
 			}
-
+			
 			if d == 0 {
 				// First pass: exact match.
 				rd[j] = ((rd[j+1] << 1) | 1) & charMatch
@@ -133,7 +133,7 @@ func (dmp *DiffMatchPatch) matchBitapScore(e, x, loc int, pattern string) float6
 		if proximity == 0 {
 			return accuracy
 		}
-
+		
 		return 1.0
 	}
 	return accuracy + (proximity / float64(dmp.MatchDistance))
@@ -150,7 +150,7 @@ func (dmp *DiffMatchPatch) MatchAlphabet(pattern string) map[byte]int {
 		}
 	}
 	i := 0
-
+	
 	for _, c := range charPattern {
 		value := s[c] | int(uint(1)<<uint((len(pattern)-i-1)))
 		s[c] = value

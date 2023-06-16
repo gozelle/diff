@@ -1,5 +1,5 @@
 // Copyright (c) 2012-2016 The go-diff authors. All rights reserved.
-// https://github.com/sergi/go-diff
+// https://github.com/gozelle/diff
 // See the included LICENSE file for license details.
 //
 // go-diff is a Go implementation of Google's Diff, Match, and Patch library
@@ -18,16 +18,16 @@ import (
 	"testing"
 	"time"
 	"unicode/utf8"
-
+	
 	"github.com/stretchr/testify/assert"
 )
 
 func pretty(diffs []Diff) string {
 	var w bytes.Buffer
-
+	
 	for i, diff := range diffs {
 		_, _ = w.WriteString(fmt.Sprintf("%v. ", i))
-
+		
 		switch diff.Type {
 		case DiffInsert:
 			_, _ = w.WriteString("DiffIns")
@@ -38,16 +38,16 @@ func pretty(diffs []Diff) string {
 		default:
 			_, _ = w.WriteString("Unknown")
 		}
-
+		
 		_, _ = w.WriteString(fmt.Sprintf(": %v\n", diff.Text))
 	}
-
+	
 	return w.String()
 }
 
 func diffRebuildTexts(diffs []Diff) []string {
 	texts := []string{"", ""}
-
+	
 	for _, d := range diffs {
 		if d.Type != DiffInsert {
 			texts[0] += d.Text
@@ -56,22 +56,22 @@ func diffRebuildTexts(diffs []Diff) []string {
 			texts[1] += d.Text
 		}
 	}
-
+	
 	return texts
 }
 
 func TestDiffCommonPrefix(t *testing.T) {
 	type TestCase struct {
 		Name string
-
+		
 		Text1 string
 		Text2 string
-
+		
 		Expected int
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{"Null", "abc", "xyz", 0},
 		{"Non-null", "1234abcdef", "1234xyz", 4},
@@ -84,9 +84,9 @@ func TestDiffCommonPrefix(t *testing.T) {
 
 func BenchmarkDiffCommonPrefix(b *testing.B) {
 	s := "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ"
-
+	
 	dmp := New()
-
+	
 	for i := 0; i < b.N; i++ {
 		dmp.DiffCommonPrefix(s, s)
 	}
@@ -96,10 +96,10 @@ func TestCommonPrefixLength(t *testing.T) {
 	type TestCase struct {
 		Text1 string
 		Text2 string
-
+		
 		Expected int
 	}
-
+	
 	for i, tc := range []TestCase{
 		{"abc", "xyz", 0},
 		{"1234abcdef", "1234xyz", 4},
@@ -113,15 +113,15 @@ func TestCommonPrefixLength(t *testing.T) {
 func TestDiffCommonSuffix(t *testing.T) {
 	type TestCase struct {
 		Name string
-
+		
 		Text1 string
 		Text2 string
-
+		
 		Expected int
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{"Null", "abc", "xyz", 0},
 		{"Non-null", "abcdef1234", "xyz1234", 4},
@@ -136,11 +136,11 @@ var SinkInt int // exported sink var to avoid compiler optimizations in benchmar
 
 func BenchmarkDiffCommonSuffix(b *testing.B) {
 	s := "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ"
-
+	
 	dmp := New()
-
+	
 	b.ResetTimer()
-
+	
 	for i := 0; i < b.N; i++ {
 		SinkInt = dmp.DiffCommonSuffix(s, s)
 	}
@@ -182,10 +182,10 @@ func TestCommonSuffixLength(t *testing.T) {
 	type TestCase struct {
 		Text1 string
 		Text2 string
-
+		
 		Expected int
 	}
-
+	
 	for i, tc := range []TestCase{
 		{"abc", "xyz", 0},
 		{"abcdef1234", "xyz1234", 4},
@@ -200,15 +200,15 @@ func TestCommonSuffixLength(t *testing.T) {
 func TestDiffCommonOverlap(t *testing.T) {
 	type TestCase struct {
 		Name string
-
+		
 		Text1 string
 		Text2 string
-
+		
 		Expected int
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{"Null", "", "abcd", 0},
 		{"Whole", "abc", "abcd", 3},
@@ -226,38 +226,38 @@ func TestDiffHalfMatch(t *testing.T) {
 	type TestCase struct {
 		Text1 string
 		Text2 string
-
+		
 		Expected []string
 	}
-
+	
 	dmp := New()
 	dmp.DiffTimeout = 1
-
+	
 	for i, tc := range []TestCase{
 		// No match
 		{"1234567890", "abcdef", nil},
 		{"12345", "23", nil},
-
+		
 		// Single Match
 		{"1234567890", "a345678z", []string{"12", "90", "a", "z", "345678"}},
 		{"a345678z", "1234567890", []string{"a", "z", "12", "90", "345678"}},
 		{"abc56789z", "1234567890", []string{"abc", "z", "1234", "0", "56789"}},
 		{"a23456xyz", "1234567890", []string{"a", "xyz", "1", "7890", "23456"}},
-
+		
 		// Multiple Matches
 		{"121231234123451234123121", "a1234123451234z", []string{"12123", "123121", "a", "z", "1234123451234"}},
 		{"x-=-=-=-=-=-=-=-=-=-=-=-=", "xx-=-=-=-=-=-=-=", []string{"", "-=-=-=-=-=", "x", "", "x-=-=-=-=-=-=-="}},
 		{"-=-=-=-=-=-=-=-=-=-=-=-=y", "-=-=-=-=-=-=-=yy", []string{"-=-=-=-=-=", "", "", "y", "-=-=-=-=-=-=-=y"}},
-
+		
 		// Non-optimal halfmatch, ptimal diff would be -q+x=H-i+e=lloHe+Hu=llo-Hew+y not -qHillo+x=HelloHe-w+Hulloy
 		{"qHilloHelloHew", "xHelloHeHulloy", []string{"qHillo", "w", "x", "Hulloy", "HelloHe"}},
 	} {
 		actual := dmp.DiffHalfMatch(tc.Text1, tc.Text2)
 		assert.Equal(t, tc.Expected, actual, fmt.Sprintf("Test case #%d, %#v", i, tc))
 	}
-
+	
 	dmp.DiffTimeout = 0
-
+	
 	for i, tc := range []TestCase{
 		// Optimal no halfmatch
 		{"qHilloHelloHew", "xHelloHeHulloy", nil},
@@ -269,11 +269,11 @@ func TestDiffHalfMatch(t *testing.T) {
 
 func BenchmarkDiffHalfMatch(b *testing.B) {
 	s1, s2 := speedtestTexts()
-
+	
 	dmp := New()
-
+	
 	b.ResetTimer()
-
+	
 	for i := 0; i < b.N; i++ {
 		dmp.DiffHalfMatch(s1, s2)
 	}
@@ -284,19 +284,19 @@ func TestDiffBisectSplit(t *testing.T) {
 		Text1 string
 		Text2 string
 	}
-
+	
 	dmp := New()
-
+	
 	for _, tc := range []TestCase{
 		{"STUV\x05WX\x05YZ\x05[", "WĺĻļ\x05YZ\x05ĽľĿŀZ"},
 	} {
 		diffs := dmp.diffBisectSplit([]rune(tc.Text1),
 			[]rune(tc.Text2), 7, 6, time.Now().Add(time.Hour))
-
+		
 		for _, d := range diffs {
 			assert.True(t, utf8.ValidString(d.Text))
 		}
-
+		
 		// TODO define the expected outcome
 	}
 }
@@ -305,14 +305,14 @@ func TestDiffLinesToChars(t *testing.T) {
 	type TestCase struct {
 		Text1 string
 		Text2 string
-
+		
 		ExpectedChars1 string
 		ExpectedChars2 string
 		ExpectedLines  []string
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{"", "alpha\r\nbeta\r\n\r\n\r\n", "", "1,2,3,3", []string{"", "alpha\r\n", "beta\r\n", "\r\n"}},
 		{"a", "b", "1", "2", []string{"", "a", "b"}},
@@ -326,7 +326,7 @@ func TestDiffLinesToChars(t *testing.T) {
 		assert.Equal(t, tc.ExpectedChars2, actualChars2, fmt.Sprintf("Test case #%d, %#v", i, tc))
 		assert.Equal(t, tc.ExpectedLines, actualLines, fmt.Sprintf("Test case #%d, %#v", i, tc))
 	}
-
+	
 	// More than 256 to reveal any 8-bit limitations.
 	n := 300
 	lineList := []string{
@@ -340,7 +340,7 @@ func TestDiffLinesToChars(t *testing.T) {
 	lines := strings.Join(lineList, "")
 	chars := strings.Join(charList[:], ",")
 	assert.Equal(t, n, len(strings.Split(chars, ",")))
-
+	
 	actualChars1, actualChars2, actualLines := dmp.DiffLinesToChars(lines, "")
 	assert.Equal(t, chars, actualChars1)
 	assert.Equal(t, "", actualChars2)
@@ -351,12 +351,12 @@ func TestDiffCharsToLines(t *testing.T) {
 	type TestCase struct {
 		Diffs []Diff
 		Lines []string
-
+		
 		Expected []Diff
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{
 			Diffs: []Diff{
@@ -364,7 +364,7 @@ func TestDiffCharsToLines(t *testing.T) {
 				{DiffInsert, "2,1,2"},
 			},
 			Lines: []string{"", "alpha\n", "beta\n"},
-
+			
 			Expected: []Diff{
 				{DiffEqual, "alpha\nbeta\nalpha\n"},
 				{DiffInsert, "beta\nalpha\nbeta\n"},
@@ -374,7 +374,7 @@ func TestDiffCharsToLines(t *testing.T) {
 		actual := dmp.DiffCharsToLines(tc.Diffs, tc.Lines)
 		assert.Equal(t, tc.Expected, actual, fmt.Sprintf("Test case #%d, %#v", i, tc))
 	}
-
+	
 	// More than 256 to reveal any 8-bit limitations.
 	n := 300
 	lineList := []string{
@@ -387,7 +387,7 @@ func TestDiffCharsToLines(t *testing.T) {
 	}
 	assert.Equal(t, n, len(charList))
 	chars := strings.Join(charList[:], ",")
-
+	
 	actual := dmp.DiffCharsToLines([]Diff{Diff{DiffDelete, chars}}, lineList)
 	assert.Equal(t, []Diff{Diff{DiffDelete, strings.Join(lineList, "")}}, actual)
 }
@@ -395,14 +395,14 @@ func TestDiffCharsToLines(t *testing.T) {
 func TestDiffCleanupMerge(t *testing.T) {
 	type TestCase struct {
 		Name string
-
+		
 		Diffs []Diff
-
+		
 		Expected []Diff
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{
 			"Null case",
@@ -478,14 +478,14 @@ func TestDiffCleanupMerge(t *testing.T) {
 func TestDiffCleanupSemanticLossless(t *testing.T) {
 	type TestCase struct {
 		Name string
-
+		
 		Diffs []Diff
-
+		
 		Expected []Diff
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{
 			"Null case",
@@ -616,14 +616,14 @@ func TestDiffCleanupSemanticLossless(t *testing.T) {
 func TestDiffCleanupSemantic(t *testing.T) {
 	type TestCase struct {
 		Name string
-
+		
 		Diffs []Diff
-
+		
 		Expected []Diff
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{
 			"Null case",
@@ -871,13 +871,13 @@ func TestDiffCleanupSemantic(t *testing.T) {
 
 func BenchmarkDiffCleanupSemantic(b *testing.B) {
 	s1, s2 := speedtestTexts()
-
+	
 	dmp := New()
-
+	
 	diffs := dmp.DiffMain(s1, s2, false)
-
+	
 	b.ResetTimer()
-
+	
 	for i := 0; i < b.N; i++ {
 		dmp.DiffCleanupSemantic(diffs)
 	}
@@ -886,15 +886,15 @@ func BenchmarkDiffCleanupSemantic(b *testing.B) {
 func TestDiffCleanupEfficiency(t *testing.T) {
 	type TestCase struct {
 		Name string
-
+		
 		Diffs []Diff
-
+		
 		Expected []Diff
 	}
-
+	
 	dmp := New()
 	dmp.DiffEditCost = 4
-
+	
 	for i, tc := range []TestCase{
 		{
 			"Null case",
@@ -965,9 +965,9 @@ func TestDiffCleanupEfficiency(t *testing.T) {
 		actual := dmp.DiffCleanupEfficiency(tc.Diffs)
 		assert.Equal(t, tc.Expected, actual, fmt.Sprintf("Test case #%d, %s", i, tc.Name))
 	}
-
+	
 	dmp.DiffEditCost = 5
-
+	
 	for i, tc := range []TestCase{
 		{
 			"High cost elimination",
@@ -992,12 +992,12 @@ func TestDiffCleanupEfficiency(t *testing.T) {
 func TestDiffPrettyHtml(t *testing.T) {
 	type TestCase struct {
 		Diffs []Diff
-
+		
 		Expected string
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{
 			Diffs: []Diff{
@@ -1005,7 +1005,7 @@ func TestDiffPrettyHtml(t *testing.T) {
 				{DiffDelete, "<B>b</B>"},
 				{DiffInsert, "c&d"},
 			},
-
+			
 			Expected: "<span>a&para;<br></span><del style=\"background:#ffe6e6;\">&lt;B&gt;b&lt;/B&gt;</del><ins style=\"background:#e6ffe6;\">c&amp;d</ins>",
 		},
 	} {
@@ -1017,12 +1017,12 @@ func TestDiffPrettyHtml(t *testing.T) {
 func TestDiffPrettyText(t *testing.T) {
 	type TestCase struct {
 		Diffs []Diff
-
+		
 		Expected string
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{
 			Diffs: []Diff{
@@ -1030,7 +1030,7 @@ func TestDiffPrettyText(t *testing.T) {
 				{DiffDelete, "<B>b</B>"},
 				{DiffInsert, "c&d"},
 			},
-
+			
 			Expected: "a\n\x1b[31m<B>b</B>\x1b[0m\x1b[32mc&d\x1b[0m",
 		},
 	} {
@@ -1042,13 +1042,13 @@ func TestDiffPrettyText(t *testing.T) {
 func TestDiffText(t *testing.T) {
 	type TestCase struct {
 		Diffs []Diff
-
+		
 		ExpectedText1 string
 		ExpectedText2 string
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{
 			Diffs: []Diff{
@@ -1060,14 +1060,14 @@ func TestDiffText(t *testing.T) {
 				{DiffInsert, "a"},
 				{DiffEqual, " lazy"},
 			},
-
+			
 			ExpectedText1: "jumps over the lazy",
 			ExpectedText2: "jumped over a lazy",
 		},
 	} {
 		actualText1 := dmp.DiffText1(tc.Diffs)
 		assert.Equal(t, tc.ExpectedText1, actualText1, fmt.Sprintf("Test case #%d, %#v", i, tc))
-
+		
 		actualText2 := dmp.DiffText2(tc.Diffs)
 		assert.Equal(t, tc.ExpectedText2, actualText2, fmt.Sprintf("Test case #%d, %#v", i, tc))
 	}
@@ -1076,15 +1076,15 @@ func TestDiffText(t *testing.T) {
 func TestDiffDelta(t *testing.T) {
 	type TestCase struct {
 		Name string
-
+		
 		Text  string
 		Delta string
-
+		
 		ErrorMessagePrefix string
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{"Delta shorter than text", "jumps over the lazyx", "=4\t-1\t+ed\t=6\t-3\t+a\t=5\t+old dog", "Delta length (19) is different from source text length (20)"},
 		{"Delta longer than text", "umps over the lazy", "=4\t-1\t+ed\t=6\t-3\t+a\t=5\t+old dog", "Delta length (19) is different from source text length (18)"},
@@ -1109,7 +1109,7 @@ func TestDiffDelta(t *testing.T) {
 			assert.Equal(t, tc.ErrorMessagePrefix, e, msg)
 		}
 	}
-
+	
 	// Convert a diff into delta string.
 	diffs := []Diff{
 		Diff{DiffEqual, "jump"},
@@ -1123,14 +1123,14 @@ func TestDiffDelta(t *testing.T) {
 	}
 	text1 := dmp.DiffText1(diffs)
 	assert.Equal(t, "jumps over the lazy", text1)
-
+	
 	delta := dmp.DiffToDelta(diffs)
 	assert.Equal(t, "=4\t-1\t+ed\t=6\t-3\t+a\t=5\t+old dog", delta)
-
+	
 	// Convert delta string into a diff.
 	deltaDiffs, err := dmp.DiffFromDelta(text1, delta)
 	assert.Equal(t, diffs, deltaDiffs)
-
+	
 	// Test deltas with special characters.
 	diffs = []Diff{
 		Diff{DiffEqual, "\u0680 \x00 \t %"},
@@ -1139,23 +1139,23 @@ func TestDiffDelta(t *testing.T) {
 	}
 	text1 = dmp.DiffText1(diffs)
 	assert.Equal(t, "\u0680 \x00 \t %\u0681 \x01 \n ^", text1)
-
+	
 	// Lowercase, due to UrlEncode uses lower.
 	delta = dmp.DiffToDelta(diffs)
 	assert.Equal(t, "=7\t-7\t+%DA%82 %02 %5C %7C", delta)
-
+	
 	deltaDiffs, err = dmp.DiffFromDelta(text1, delta)
 	assert.Equal(t, diffs, deltaDiffs)
 	assert.Nil(t, err)
-
+	
 	// Verify pool of unchanged characters.
 	diffs = []Diff{
 		Diff{DiffInsert, "A-Z a-z 0-9 - _ . ! ~ * ' ( ) ; / ? : @ & = + $ , # "},
 	}
-
+	
 	delta = dmp.DiffToDelta(diffs)
 	assert.Equal(t, "+A-Z a-z 0-9 - _ . ! ~ * ' ( ) ; / ? : @ & = + $ , # ", delta, "Unchanged characters.")
-
+	
 	// Convert delta string into a diff.
 	deltaDiffs, err = dmp.DiffFromDelta("", delta)
 	assert.Equal(t, diffs, deltaDiffs)
@@ -1165,15 +1165,15 @@ func TestDiffDelta(t *testing.T) {
 func TestDiffXIndex(t *testing.T) {
 	type TestCase struct {
 		Name string
-
+		
 		Diffs    []Diff
 		Location int
-
+		
 		Expected int
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{"Translation on equality", []Diff{{DiffDelete, "a"}, {DiffInsert, "1234"}, {DiffEqual, "xyz"}}, 2, 5},
 		{"Translation on deletion", []Diff{{DiffEqual, "a"}, {DiffDelete, "1234"}, {DiffEqual, "xyz"}}, 3, 1},
@@ -1186,14 +1186,14 @@ func TestDiffXIndex(t *testing.T) {
 func TestDiffLevenshtein(t *testing.T) {
 	type TestCase struct {
 		Name string
-
+		
 		Diffs []Diff
-
+		
 		Expected int
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{"Levenshtein with trailing equality", []Diff{{DiffDelete, "абв"}, {DiffInsert, "1234"}, {DiffEqual, "эюя"}}, 4},
 		{"Levenshtein with leading equality", []Diff{{DiffEqual, "эюя"}, {DiffDelete, "абв"}, {DiffInsert, "1234"}}, 4},
@@ -1207,19 +1207,19 @@ func TestDiffLevenshtein(t *testing.T) {
 func TestDiffBisect(t *testing.T) {
 	type TestCase struct {
 		Name string
-
+		
 		Time time.Time
-
+		
 		Expected []Diff
 	}
-
+	
 	dmp := New()
-
+	
 	for i, tc := range []TestCase{
 		{
 			Name: "normal",
 			Time: time.Date(9999, time.December, 31, 23, 59, 59, 59, time.UTC),
-
+			
 			Expected: []Diff{
 				{DiffDelete, "c"},
 				{DiffInsert, "m"},
@@ -1231,7 +1231,7 @@ func TestDiffBisect(t *testing.T) {
 		{
 			Name: "Negative deadlines count as having infinite time",
 			Time: time.Date(0001, time.January, 01, 00, 00, 00, 00, time.UTC),
-
+			
 			Expected: []Diff{
 				{DiffDelete, "c"},
 				{DiffInsert, "m"},
@@ -1243,7 +1243,7 @@ func TestDiffBisect(t *testing.T) {
 		{
 			Name: "Timeout",
 			Time: time.Now().Add(time.Nanosecond),
-
+			
 			Expected: []Diff{
 				{DiffDelete, "cat"},
 				{DiffInsert, "map"},
@@ -1253,7 +1253,7 @@ func TestDiffBisect(t *testing.T) {
 		actual := dmp.DiffBisect("cat", "map", tc.Time)
 		assert.Equal(t, tc.Expected, actual, fmt.Sprintf("Test case #%d, %s", i, tc.Name))
 	}
-
+	
 	// Test for invalid UTF-8 sequences
 	assert.Equal(t, []Diff{
 		Diff{DiffEqual, "��"},
@@ -1264,12 +1264,12 @@ func TestDiffMain(t *testing.T) {
 	type TestCase struct {
 		Text1 string
 		Text2 string
-
+		
 		Expected []Diff
 	}
-
+	
 	dmp := New()
-
+	
 	// Perform a trivial diff.
 	for i, tc := range []TestCase{
 		{
@@ -1306,10 +1306,10 @@ func TestDiffMain(t *testing.T) {
 		actual := dmp.DiffMain(tc.Text1, tc.Text2, false)
 		assert.Equal(t, tc.Expected, actual, fmt.Sprintf("Test case #%d, %#v", i, tc))
 	}
-
+	
 	// Perform a real diff and switch off the timeout.
 	dmp.DiffTimeout = 0
-
+	
 	for i, tc := range []TestCase{
 		{
 			"a",
@@ -1388,7 +1388,7 @@ func TestDiffMain(t *testing.T) {
 		actual := dmp.DiffMain(tc.Text1, tc.Text2, false)
 		assert.Equal(t, tc.Expected, actual, fmt.Sprintf("Test case #%d, %#v", i, tc))
 	}
-
+	
 	// Test for invalid UTF-8 sequences
 	assert.Equal(t, []Diff{
 		Diff{DiffDelete, "��"},
@@ -1398,7 +1398,7 @@ func TestDiffMain(t *testing.T) {
 func TestDiffMainWithTimeout(t *testing.T) {
 	dmp := New()
 	dmp.DiffTimeout = 200 * time.Millisecond
-
+	
 	a := "`Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe:\nAll mimsy were the borogoves,\nAnd the mome raths outgrabe.\n"
 	b := "I am the very model of a modern major general,\nI've information vegetable, animal, and mineral,\nI know the kings of England, and I quote the fights historical,\nFrom Marathon to Waterloo, in order categorical.\n"
 	// Increase the text lengths by 1024 times to ensure a timeout.
@@ -1406,16 +1406,16 @@ func TestDiffMainWithTimeout(t *testing.T) {
 		a = a + a
 		b = b + b
 	}
-
+	
 	startTime := time.Now()
 	dmp.DiffMain(a, b, true)
 	endTime := time.Now()
-
+	
 	delta := endTime.Sub(startTime)
-
+	
 	// Test that we took at least the timeout period.
 	assert.True(t, delta >= dmp.DiffTimeout, fmt.Sprintf("%v !>= %v", delta, dmp.DiffTimeout))
-
+	
 	// Test that we didn't take forever (be very forgiving). Theoretically this test could fail very occasionally if the OS task swaps or locks up for a second at the wrong moment.
 	assert.True(t, delta < (dmp.DiffTimeout*100), fmt.Sprintf("%v !< %v", delta, dmp.DiffTimeout*100))
 }
@@ -1425,10 +1425,10 @@ func TestDiffMainWithCheckLines(t *testing.T) {
 		Text1 string
 		Text2 string
 	}
-
+	
 	dmp := New()
 	dmp.DiffTimeout = 0
-
+	
 	// Test cases must be at least 100 chars long to pass the cutoff.
 	for i, tc := range []TestCase{
 		{
@@ -1446,7 +1446,7 @@ func TestDiffMainWithCheckLines(t *testing.T) {
 	} {
 		resultWithoutCheckLines := dmp.DiffMain(tc.Text1, tc.Text2, false)
 		resultWithCheckLines := dmp.DiffMain(tc.Text1, tc.Text2, true)
-
+		
 		// TODO this fails for the third test case, why?
 		if i != 2 {
 			assert.Equal(t, resultWithoutCheckLines, resultWithCheckLines, fmt.Sprintf("Test case #%d, %#v", i, tc))
@@ -1460,7 +1460,7 @@ func TestMassiveRuneDiffConversion(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-
+	
 	dmp := New()
 	t1, t2, tt := dmp.DiffLinesToChars("", string(sNew))
 	diffs := dmp.DiffMain(t1, t2, false)
@@ -1471,18 +1471,18 @@ func TestMassiveRuneDiffConversion(t *testing.T) {
 func BenchmarkDiffMain(bench *testing.B) {
 	s1 := "`Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe:\nAll mimsy were the borogoves,\nAnd the mome raths outgrabe.\n"
 	s2 := "I am the very model of a modern major general,\nI've information vegetable, animal, and mineral,\nI know the kings of England, and I quote the fights historical,\nFrom Marathon to Waterloo, in order categorical.\n"
-
+	
 	// Increase the text lengths by 1024 times to ensure a timeout.
 	for x := 0; x < 10; x++ {
 		s1 = s1 + s1
 		s2 = s2 + s2
 	}
-
+	
 	dmp := New()
 	dmp.DiffTimeout = time.Second
-
+	
 	bench.ResetTimer()
-
+	
 	for i := 0; i < bench.N; i++ {
 		dmp.DiffMain(s1, s2, true)
 	}
@@ -1490,11 +1490,11 @@ func BenchmarkDiffMain(bench *testing.B) {
 
 func BenchmarkDiffMainLarge(b *testing.B) {
 	s1, s2 := speedtestTexts()
-
+	
 	dmp := New()
-
+	
 	b.ResetTimer()
-
+	
 	for i := 0; i < b.N; i++ {
 		dmp.DiffMain(s1, s2, true)
 	}
@@ -1502,14 +1502,14 @@ func BenchmarkDiffMainLarge(b *testing.B) {
 
 func BenchmarkDiffMainRunesLargeLines(b *testing.B) {
 	s1, s2 := speedtestTexts()
-
+	
 	dmp := New()
-
+	
 	b.ResetTimer()
-
+	
 	for i := 0; i < b.N; i++ {
 		text1, text2, linearray := dmp.DiffLinesToRunes(s1, s2)
-
+		
 		diffs := dmp.DiffMainRunes(text1, text2, false)
 		diffs = dmp.DiffCharsToLines(diffs, linearray)
 	}
@@ -1519,14 +1519,14 @@ func BenchmarkDiffMainRunesLargeDiffLines(b *testing.B) {
 	fp, _ := os.Open("../testdata/diff10klinestest.txt")
 	defer fp.Close()
 	data, _ := ioutil.ReadAll(fp)
-
+	
 	dmp := New()
-
+	
 	b.ResetTimer()
-
+	
 	for i := 0; i < b.N; i++ {
 		text1, text2, linearray := dmp.DiffLinesToRunes(string(data), "")
-
+		
 		diffs := dmp.DiffMainRunes(text1, text2, false)
 		diffs = dmp.DiffCharsToLines(diffs, linearray)
 	}
