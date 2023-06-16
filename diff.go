@@ -6,7 +6,7 @@
 // Original library is Copyright (c) 2006 Google Inc.
 // http://code.google.com/p/google-diff-match-patch/
 
-package diffmatchpatch
+package diff
 
 import (
 	"bytes"

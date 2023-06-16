@@ -6,7 +6,7 @@
 // Original library is Copyright (c) 2006 Google Inc.
 // http://code.google.com/p/google-diff-match-patch/
 
-package diffmatchpatch
+package diff
 
 import (
 	"bytes"
@@ -1456,7 +1456,7 @@ func TestDiffMainWithCheckLines(t *testing.T) {
 }
 
 func TestMassiveRuneDiffConversion(t *testing.T) {
-	sNew, err := ioutil.ReadFile("../testdata/fixture.go")
+	sNew, err := ioutil.ReadFile("./testdata/fixture.go")
 	if err != nil {
 		panic(err)
 	}

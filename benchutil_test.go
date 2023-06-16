@@ -6,18 +6,23 @@
 // Original library is Copyright (c) 2006 Google Inc.
 // http://code.google.com/p/google-diff-match-patch/
 
-package diffmatchpatch
+package diff
 
-func min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
+import (
+	"io/ioutil"
+)
 
-func max(x, y int) int {
-	if x > y {
-		return x
+const testdataPath = "../testdata/"
+
+func speedtestTexts() (s1 string, s2 string) {
+	d1, err := ioutil.ReadFile(testdataPath + "speedtest1.txt")
+	if err != nil {
+		panic(err)
 	}
-	return y
+	d2, err := ioutil.ReadFile(testdataPath + "speedtest2.txt")
+	if err != nil {
+		panic(err)
+	}
+	
+	return string(d1), string(d2)
 }

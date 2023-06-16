@@ -7,7 +7,7 @@
 // http://code.google.com/p/google-diff-match-patch/
 
 // Package diffmatchpatch offers robust algorithms to perform the operations required for synchronizing plain text.
-package diffmatchpatch
+package diff
 
 import (
 	"time"
