@@ -9,7 +9,7 @@ go-diff offers algorithms to perform operations required for synchronizing plain
 ## Installation
 
 ```bash
-go get -u github.com/gozelle/diff/...
+go get -u github.com/gozelle/diff
 ```
 
 ## Usage
@@ -22,7 +22,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/gozelle/diff/diffmatchpatch"
+	"github.com/gozelle/diff"
 )
 
 const (
@@ -31,7 +31,7 @@ const (
 )
 
 func main() {
-	dmp := diffmatchpatch.New()
+	dmp := diff.New()
 
 	diffs := dmp.DiffMain(text1, text2, false)
 
